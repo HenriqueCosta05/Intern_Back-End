@@ -8,9 +8,19 @@ datasource db {
 }
 
 model User {
-  user_id String @id
+  user_id String @id @default(uuid())
   name String
   phone_number String
   email String @unique
-  password String
+  password String 
+  tasks Task[]
+}
+
+model Task {
+  task_id String @id @default(uuid())
+  title String
+  description String
+  status String
+  user User @relation(fields: [user_id], references: [user_id])
+  user_id String
 }
