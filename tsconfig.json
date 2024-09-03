@@ -16,6 +16,15 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false
-  }
+    "noFallthroughCasesInSwitch": false,
+    "paths": {
+      "@/*": ["src/*"],
+      "@services/*": ["src/services/*"],
+      "@controllers/*": ["src/controllers/*"],
+      "@modules/*": ["src/modules/*"],
+      "@guards/*": ["src/guards/*"],
+      "@constants/*": ["src/constants/*"],
+      "@DTOs/*": ["src/DTOs/*"],
+    }
+  },
 }
