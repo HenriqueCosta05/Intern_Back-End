@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+} from '@nestjs/common';
 import { UsersService } from '@/services/users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -17,13 +21,14 @@ export class AuthService {
     const user = await this.usersService.findByEmail(email);
     if (!user) {
       throw new UnauthorizedException({
-        message: "Usuário não encontrado!"
+        message: 'Usuário não encontrado!',
       });
     }
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException({
-        message: "Credenciais Inválidas"});
+        message: 'Credenciais Inválidas',
+      });
     }
     const payload = { sub: user.user_id };
     return {
@@ -40,8 +45,9 @@ export class AuthService {
     const existingUser = await this.usersService.findByEmail(email);
     if (existingUser) {
       throw new ConflictException({
-        message: "Email já cadastrado no sistema! Tente novamente com outro email."
-    });
+        message:
+          'Email já cadastrado no sistema! Tente novamente com outro email.',
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -58,7 +64,16 @@ export class AuthService {
     };
   }
 
-  async validateUser(userId: string): Promise<any> {
-    return this.usersService.findOne({ user_id: userId });
+  async resetPassword(userId: string, newPassword: string): Promise<void> {
+    if (!newPassword) {
+      throw new UnauthorizedException({
+        message: 'Nova senha não pode ser vazia!',
+      });
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.usersService.updateUser({
+      data: { password: hashedPassword },
+      where: { user_id: userId },
+    });
   }
 }

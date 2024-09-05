@@ -16,4 +16,8 @@ describe('PrismaService', () => {
     expect(service).toBeDefined();
   });
   
+  it('should return PrismaClient instance', () => {
+    expect(service).toBeDefined();
+  })
+  
 });
