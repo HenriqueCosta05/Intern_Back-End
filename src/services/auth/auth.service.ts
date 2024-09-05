@@ -15,9 +15,12 @@ export class AuthService {
     password: string,
   ): Promise<{ access_token: string }> {
     const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      throw new UnauthorizedException('Usuário não encontrado');
+    }
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Credenciais inválidas');
     }
     const payload = { sub: user.user_id };
     return {
@@ -38,6 +41,12 @@ export class AuthService {
       email,
       password: hashedPassword,
     });
+    if (!user) {
+      throw new UnauthorizedException('Erro ao criar usuário');
+    }
+    if (user.email === email) {
+      throw new UnauthorizedException('Email já cadastrado');
+    }
     const payload = { sub: user.user_id };
     return {
       access_token: await this.jwtService.signAsync(payload),
