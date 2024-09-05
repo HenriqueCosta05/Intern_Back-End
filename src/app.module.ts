@@ -8,13 +8,22 @@ import { AuthService } from './services/auth/auth.service';
 import { PrismaService } from './services/prisma/prisma.service';
 import { UsersService } from './services/users/users.service';
 import { UsersController } from './controllers/users/users.controller';
+import { TaskController } from './controllers/tasks/task.controller';
+import { TaskService } from './services/tasks/task.service';
+import { TaskModule } from './modules/tasks/task.module';
 
 
 
 @Module({
-  imports: [AuthModule, UsersModule],
-  controllers: [AppController, AuthController, UsersController],
-  providers: [AppService, AuthService, UsersService, PrismaService],
+  imports: [AuthModule, UsersModule, TaskModule],
+  controllers: [AppController, AuthController, UsersController, TaskController],
+  providers: [
+    AppService,
+    AuthService,
+    UsersService,
+    PrismaService,
+    TaskService,
+  ],
 })
 export class AppModule {
 }
