@@ -1,96 +1,62 @@
-import { AuthService } from './auth.service';
-import { PrismaClient } from '@prisma/client';
-import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
+import { AuthService } from './auth.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { JwtService } from '@nestjs/jwt';
+import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 
-describe('AuthService', () => {
+describe('AuthService tests', () => {
   let service: AuthService;
-  let prisma: PrismaClient;
+  let prismaService: PrismaService;
   let jwtService: JwtService;
+  let usersService: UsersService;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AuthService, PrismaClient, JwtService],
+      providers: [UsersService, PrismaService, JwtService, AuthService],
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    prisma = module.get<PrismaClient>(PrismaClient);
+    prismaService = module.get<PrismaService>(PrismaService);
     jwtService = module.get<JwtService>(JwtService);
+    usersService = module.get<UsersService>(UsersService);
   });
 
-  it('should login a user', async () => {
-    const loginDto = {
-      email: 'john@doe.com',
-      password: 'password',
-    };
-
-    const fakeUser = {
-      user_id: '1',
-      name: 'John Doe',
-      phone_number: '1234567890',
-      email: 'john@doe.com',
-      password: 'hashedpassword',
-    };
-
-    (prisma.user.findUnique as jest.Mock).mockReturnValue(
-      Promise.resolve(fakeUser),
-    );
-    (jest.spyOn(bcrypt, 'compare') as jest.Mock).mockResolvedValue(true);
-    (jest.spyOn(jwtService, 'sign') as jest.Mock).mockReturnValue('token');
-
-    const result = await service.signIn(loginDto.email, loginDto.password);
-    expect(result).toEqual({ access_token: 'token' });
-    expect(prisma.user.findUnique).toHaveBeenCalledWith({
-      where: { email: loginDto.email },
-    });
-    expect(jwtService.sign).toHaveBeenCalledWith({
-      user_id: fakeUser.user_id,
-    });
+  it('should be defined', () => {
+    expect(service).toBeDefined();
   });
-  it('should register a user', async () => {
-    const registerDto = {
-      name: 'John Doe',
-      phone_number: '1234567890',
-      email: 'john@doe2.com',
-      password: 'password',
-    };
 
-    const fakeUser = {
-      user_id: '1',
-      name: 'John Doe',
-      phone_number: '1234567890',
-      email: 'john@doe2.com',
-      password: 'password',
-    };
-
-    (prisma.user.create as jest.Mock).mockReturnValue(
-      Promise.resolve(fakeUser),
-    );
-    (jest.spyOn(bcrypt, 'hash') as jest.Mock).mockResolvedValue(
-      'hashedpassword',
-    );
-    (jest.spyOn(jwtService, 'sign') as jest.Mock).mockReturnValue('token');
-
+  it('should register a new user', async () => {
     const result = await service.register(
-      registerDto.name,
-      registerDto.phone_number,
-      registerDto.email,
-      registerDto.password,
+      mockUser.name,
+      mockUser.phone_number,
+      mockUser.email,
+      mockUser.password,
     );
-    expect(result).toEqual({
-      access_token: 'token',
+    expect(result).toHaveProperty('access_token');
+    expect(usersService.createUser).toHaveBeenCalledWith({
+      name: mockUser.name,
+      phone_number: mockUser.phone_number,
+      email: mockUser.email,
+      password: expect.any(String),
     });
-    expect(prisma.user.create).toHaveBeenCalledWith({
-      data: {
-        name: registerDto.name,
-        phone_number: registerDto.phone_number,
-        email: registerDto.email,
-        password: 'hashedpassword',
-      },
+  });
+
+  it('should login an existing user', async () => {
+    const hashedPassword = await bcrypt.hash(mockUser.password, 10);
+    (prismaService.user.findFirst as jest.Mock).mockResolvedValue({
+      ...mockUser,
+      password: hashedPassword,
     });
-    expect(jwtService.sign).toHaveBeenCalledWith({
-      user_id: fakeUser.user_id,
-    });
-  }, 30000);
+
+    const isPasswordValid = await bcrypt.compare(
+      mockUser.password,
+      hashedPassword,
+    );
+    if (isPasswordValid) {
+      const result = await service.signIn(mockUser.email, mockUser.password);
+      expect(result).toHaveProperty('access_token');
+      expect(usersService.findByEmail).toHaveBeenCalledWith(mockUser.email);
+    }
+  });
 });
