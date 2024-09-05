@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { UsersService } from '@/services/users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -15,9 +15,15 @@ export class AuthService {
     password: string,
   ): Promise<{ access_token: string }> {
     const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      throw new UnauthorizedException({
+        message: "Usuário não encontrado!"
+      });
+    }
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException({
+        message: "Credenciais Inválidas"});
     }
     const payload = { sub: user.user_id };
     return {
@@ -31,6 +37,13 @@ export class AuthService {
     email: string,
     password: string,
   ): Promise<{ access_token: string }> {
+    const existingUser = await this.usersService.findByEmail(email);
+    if (existingUser) {
+      throw new ConflictException({
+        message: "Email já cadastrado no sistema! Tente novamente com outro email."
+    });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await this.usersService.createUser({
       name,
@@ -38,6 +51,7 @@ export class AuthService {
       email,
       password: hashedPassword,
     });
+
     const payload = { sub: user.user_id };
     return {
       access_token: await this.jwtService.signAsync(payload),
