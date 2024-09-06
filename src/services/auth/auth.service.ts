@@ -64,16 +64,4 @@ export class AuthService {
     };
   }
 
-  async resetPassword(userId: string, newPassword: string): Promise<void> {
-    if (!newPassword) {
-      throw new UnauthorizedException({
-        message: 'Nova senha não pode ser vazia!',
-      });
-    }
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await this.usersService.updateUser({
-      data: { password: hashedPassword },
-      where: { user_id: userId },
-    });
-  }
 }

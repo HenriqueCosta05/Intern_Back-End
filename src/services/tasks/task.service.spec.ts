@@ -16,10 +16,6 @@ describe('TaskService', () => {
     await prisma.$disconnect();
   });
 
-  beforeEach(async () => {
-    await prisma.task.deleteMany();
-    await prisma.user.deleteMany();
-  });
 
   it('should create a task', async () => {
     const user = await prisma.user.create({
