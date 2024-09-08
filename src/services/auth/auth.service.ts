@@ -12,7 +12,7 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-  ) { }
+  ) {}
 
   async signIn(
     email: string,
@@ -24,18 +24,16 @@ export class AuthService {
         message: 'Usuário não encontrado!',
       });
     }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException({
         message: 'Credenciais Inválidas',
       });
     }
-    const payload = { sub: user.user_id };
-    return {
-      access_token: await this.jwtService.sign(payload, {
-        secret: process.env.JWT_SECRET,
-      }),
-    };
+
+   const access_token = this.jwtService.sign({ sub: user.user_id });
+   return { access_token };
   }
 
   async register(
@@ -62,31 +60,29 @@ export class AuthService {
       },
     });
 
-    const payload = { sub: user.user_id };
-    return {
-      access_token: await this.jwtService.signAsync(payload, {
-        secret: process.env.JWT_SECRET,
-      }),
-    };
+    const access_token = this.jwtService.sign({ sub: user.user_id });
+    return { access_token };
   }
 
-  async getProfile(token: any) {
+  async getProfile(user_id: string) {
     try {
-      let accessToken: string;
-      if (typeof token === 'string') {
-        const parsedToken = JSON.parse(token);
-        accessToken = parsedToken.access_token;
-      } else {
-        accessToken = token.access_token;
-      }
-  
-      const payload = await this.jwtService.verifyAsync(accessToken, {
+      const result = await this.usersService.findById(user_id);
+      return result;
+    } catch (e) {
+      throw new UnauthorizedException({
+        message: 'Token de sessão inválido',
+      });
+    }
+  }
+
+  async verifyToken(token: string) {
+    try {
+      const payload = await this.jwtService.verifyAsync(token, {
         secret: process.env.JWT_SECRET,
       });
-  
-      return this.usersService.findById(payload.sub);
-    } catch (e) {
-      throw new UnauthorizedException('Token de sessão inválido');
+      return payload;
+    } catch (err) {
+      throw new UnauthorizedException('Token inválido ou expirado');
     }
   }
 }

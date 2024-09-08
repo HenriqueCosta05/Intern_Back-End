@@ -7,7 +7,8 @@ export class JwtMiddleware implements NestMiddleware {
   constructor(private readonly jwtService: JwtService) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
-    const token = this.extractTokenFromHeader(req);
+    const token = this.extractTokenFromCookies(req);
+
     if (!token) {
       throw new UnauthorizedException('Token de sessão não encontrado');
     }
@@ -23,8 +24,7 @@ export class JwtMiddleware implements NestMiddleware {
     }
   }
 
-  private extractTokenFromHeader(request: Request): string | undefined {
-    const [type, token] = request.headers.authorization?.split(' ') ?? [];
-    return type === 'Bearer' ? token : undefined;
+  private extractTokenFromCookies(request: Request): string | undefined {
+    return request.cookies?.session_token;
   }
 }
