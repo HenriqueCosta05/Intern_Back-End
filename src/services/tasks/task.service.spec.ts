@@ -1,6 +1,7 @@
 import { PrismaClient, Task, User } from '@prisma/client';
-import { Test, TestingModule } from '@nestjs/testing';
 import { TaskService } from './task.service';
+import { mockUser } from '../../../__mocks__/auth-service.mock';
+import { mockTask } from '../../../__mocks__/task-service.mock';
 
 describe('TaskService', () => {
   let service: TaskService;
@@ -15,30 +16,14 @@ describe('TaskService', () => {
     await prisma.$disconnect();
   });
 
-  beforeEach(async () => {
-    await prisma.task.deleteMany();
-    await prisma.user.deleteMany();
-  });
 
   it('should create a task', async () => {
     const user = await prisma.user.create({
-      data: {
-        user_id: '1',
-        name: 'John Doe',
-        phone_number: '1234567890',
-        email: 'john@doe.com',
-        password: 'password',
-      },
+      data: mockUser,
     });
 
     const task = await prisma.task.create({
-      data: {
-        task_id: '1',
-        title: 'Test Task',
-        description: 'This is a test task',
-        status: 'pending',
-        user: { connect: { user_id: user.user_id } },
-      },
+      data: mockTask,
     });
 
     expect(task).toMatchObject({
@@ -52,13 +37,7 @@ describe('TaskService', () => {
 
   it('should find all tasks', async () => {
     const user = await prisma.user.create({
-      data: {
-        user_id: '1',
-        name: 'John Doe',
-        phone_number: '1234567890',
-        email: 'john@doe.com',
-        password: 'password',
-      },
+      data: mockUser,
     });
 
     await prisma.task.createMany({
@@ -86,57 +65,27 @@ describe('TaskService', () => {
 
   it('should find a task by id', async () => {
     const user = await prisma.user.create({
-      data: {
-        user_id: '1',
-        name: 'John Doe',
-        phone_number: '1234567890',
-        email: 'john@doe.com',
-        password: 'password',
-      },
+      data: mockUser,
     });
 
     const createdTask = await prisma.task.create({
-      data: {
-        task_id: '1',
-        title: 'Test Task',
-        description: 'This is a test task',
-        status: 'pending',
-        user_id: user.user_id,
-      },
+      data: mockTask,
     });
 
     const task = await prisma.task.findUnique({
       where: { task_id: createdTask.task_id },
     });
 
-    expect(task).toMatchObject({
-      task_id: '1',
-      title: 'Test Task',
-      description: 'This is a test task',
-      status: 'pending',
-      user_id: user.user_id,
-    });
+    expect(task).toMatchObject(mockTask);
   });
 
   it('should update a task', async () => {
     const user = await prisma.user.create({
-      data: {
-        user_id: '1',
-        name: 'John Doe',
-        phone_number: '1234567890',
-        email: 'john@doe.com',
-        password: 'password',
-      },
+      data: mockUser,
     });
 
     const createdTask = await prisma.task.create({
-      data: {
-        task_id: '1',
-        title: 'Test Task',
-        description: 'This is a test task',
-        status: 'pending',
-        user_id: user.user_id,
-      },
+      data: mockTask,
     });
 
     const updatedTask = await prisma.task.update({
@@ -149,23 +98,11 @@ describe('TaskService', () => {
 
   it('should delete a task', async () => {
     const user = await prisma.user.create({
-      data: {
-        user_id: '1',
-        name: 'John Doe',
-        phone_number: '1234567890',
-        email: 'john@doe.com',
-        password: 'password',
-      },
+      data: mockUser,
     });
 
     const createdTask = await prisma.task.create({
-      data: {
-        task_id: '1',
-        title: 'Test Task',
-        description: 'This is a test task',
-        status: 'pending',
-        user_id: user.user_id,
-      },
+      data: mockTask,
     });
 
     await prisma.task.delete({

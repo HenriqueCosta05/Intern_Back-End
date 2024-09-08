@@ -16,15 +16,16 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
+    "resolveJsonModule": true,
     "noFallthroughCasesInSwitch": false,
     "paths": {
       "@/*": ["src/*"],
-      "@services/*": ["src/services/*"],
-      "@controllers/*": ["src/controllers/*"],
-      "@modules/*": ["src/modules/*"],
-      "@guards/*": ["src/guards/*"],
-      "@constants/*": ["src/constants/*"],
-      "@DTOs/*": ["src/DTOs/*"],
+      "@/services/*": ["src/services/*"],
+      "@/controllers/*": ["src/controllers/*"],
+      "@/modules/*": ["src/modules/*"],
+      "@/guards/*": ["src/guards/*"],
+      "@/constants/*": ["src/constants/*"],
+      "@/DTOs/*": ["src/DTOs/*"]
     }
-  },
+  }
 }

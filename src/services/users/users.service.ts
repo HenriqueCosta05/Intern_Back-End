@@ -14,6 +14,12 @@ export class UsersService {
     });
   }
 
+  async findById(userId: string): Promise<User | null> {
+    return this.prisma.user.findUnique({
+      where: { user_id: userId },
+    });
+  }
+
   async findByEmail(email: string): Promise<User | null> {
     return this.prisma.user.findFirst({
       where: {
@@ -41,7 +47,12 @@ export class UsersService {
 
   async createUser(data: Prisma.UserCreateInput): Promise<User> {
     return this.prisma.user.create({
-      data,
+      data: {
+        ...data,
+        tasks: {
+          create: [],
+        },
+      },
     });
   }
 
