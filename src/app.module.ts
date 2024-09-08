@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthController } from './controllers/auth/auth.controller';
@@ -11,7 +11,8 @@ import { UsersController } from './controllers/users/users.controller';
 import { TaskController } from './controllers/tasks/task.controller';
 import { TaskService } from './services/tasks/task.service';
 import { TaskModule } from './modules/tasks/task.module';
-import { JwtMiddleware } from './middleware/jwt.middleware';
+import { JwtMiddleware } from './middlewares/jwt/jwt.middleware';
+import { JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [AuthModule, UsersModule, TaskModule],
@@ -22,10 +23,15 @@ import { JwtMiddleware } from './middleware/jwt.middleware';
     UsersService,
     PrismaService,
     TaskService,
+    JwtService,
   ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(JwtMiddleware).forRoutes(UsersController, TaskController);
-  }
+    consumer
+      .apply(JwtMiddleware)
+      .exclude(
+        { path: 'auth/login', method: RequestMethod.POST },
+        { path: 'auth/register', method: RequestMethod.POST },
+      ).forRoutes(UsersController, TaskController);  }
 }

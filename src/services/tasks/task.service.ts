@@ -1,17 +1,36 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { Prisma, Task } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class TaskService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+  ) {}
 
-  async findOne(
-    taskWhereUniqueInput: Prisma.TaskWhereUniqueInput,
-  ): Promise<Task | null> {
-    return this.prisma.task.findUnique({
+  async findOne(params: {
+    taskWhereUniqueInput: Prisma.TaskWhereUniqueInput;
+    token: string;
+  }): Promise<Task | null> {
+    const { taskWhereUniqueInput, token } = params;
+
+    const payload = await this.jwtService.verifyAsync(token, {
+      secret: process.env.JWT_SECRET,
+    });
+
+    const task = await this.prisma.task.findUnique({
       where: taskWhereUniqueInput,
     });
+
+    if (task?.user_id !== payload.sub) {
+      throw new UnauthorizedException(
+        'Você não tem permissão para acessar essa tarefa',
+      );
+    }
+
+    return task;
   }
 
   async findAll(params: {
@@ -20,35 +39,85 @@ export class TaskService {
     cursor?: Prisma.TaskWhereUniqueInput;
     where?: Prisma.TaskWhereInput;
     orderBy?: Prisma.TaskOrderByWithRelationInput;
+    token: string;
   }): Promise<Task[]> {
-    const { skip, take, cursor, where, orderBy } = params;
+    const { skip, take, cursor, where, orderBy, token } = params;
+
+    const payload = await this.jwtService.verifyAsync(token, {
+      secret: process.env.JWT_SECRET,
+    });
+
+    const userWhere = { ...where, user_id: payload.sub };
+
     return this.prisma.task.findMany({
       skip,
       take,
       cursor,
-      where,
+      where: userWhere,
       orderBy,
     });
   }
 
-  async createTask(data: Prisma.TaskCreateInput): Promise<Task> {
+  async createTask(params: {
+    data: Prisma.TaskCreateInput;
+    token: string;
+  }): Promise<Task> {
+    const { data, token } = params;
+
+    const payload = await this.jwtService.verifyAsync(token, {
+      secret: process.env.JWT_SECRET,
+    });
+
+    const taskData = { ...data, user: { connect: { user_id: payload.sub } } };
+
     return this.prisma.task.create({
-      data,
+      data: taskData,
     });
   }
 
   async updateTask(params: {
     where: Prisma.TaskWhereUniqueInput;
     data: Prisma.TaskUpdateInput;
+    token: string;
   }): Promise<Task> {
-    const { where, data } = params;
+    const { where, data, token } = params;
+
+    const payload = await this.jwtService.verifyAsync(token, {
+      secret: process.env.JWT_SECRET,
+    });
+
+    const task = await this.prisma.task.findUnique({
+      where,
+    });
+
+    if (task?.user_id !== payload.sub) {
+      throw new UnauthorizedException();
+    }
+
     return this.prisma.task.update({
       data,
       where,
     });
   }
 
-  async deleteTask(where: Prisma.TaskWhereUniqueInput): Promise<Task> {
+  async deleteTask(params: {
+    where: Prisma.TaskWhereUniqueInput;
+    token: string;
+  }): Promise<Task> {
+    const { where, token } = params;
+
+    const payload = await this.jwtService.verifyAsync(token, {
+      secret: process.env.JWT_SECRET,
+    });
+
+    const task = await this.prisma.task.findUnique({
+      where,
+    });
+
+    if (task?.user_id !== payload.sub) {
+      throw new UnauthorizedException();
+    }
+
     return this.prisma.task.delete({
       where,
     });

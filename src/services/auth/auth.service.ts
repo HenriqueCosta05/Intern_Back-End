@@ -12,7 +12,7 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async signIn(
     email: string,
@@ -32,7 +32,9 @@ export class AuthService {
     }
     const payload = { sub: user.user_id };
     return {
-      access_token: await this.jwtService.signAsync(payload),
+      access_token: await this.jwtService.sign(payload, {
+        secret: process.env.JWT_SECRET,
+      }),
     };
   }
 
@@ -41,13 +43,12 @@ export class AuthService {
     phone_number: string,
     email: string,
     password: string,
-  ): Promise<{ access_token: string }> {
+  ) {
     const existingUser = await this.usersService.findByEmail(email);
     if (existingUser) {
-      throw new ConflictException({
-        message:
-          'Email já cadastrado no sistema! Tente novamente com outro email.',
-      });
+      throw new ConflictException(
+        'Email já cadastrado no sistema! Tente novamente com outro email.',
+      );
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -56,12 +57,36 @@ export class AuthService {
       phone_number,
       email,
       password: hashedPassword,
+      tasks: {
+        create: [],
+      },
     });
 
     const payload = { sub: user.user_id };
     return {
-      access_token: await this.jwtService.signAsync(payload),
+      access_token: await this.jwtService.signAsync(payload, {
+        secret: process.env.JWT_SECRET,
+      }),
     };
   }
 
+  async getProfile(token: any) {
+    try {
+      let accessToken: string;
+      if (typeof token === 'string') {
+        const parsedToken = JSON.parse(token);
+        accessToken = parsedToken.access_token;
+      } else {
+        accessToken = token.access_token;
+      }
+  
+      const payload = await this.jwtService.verifyAsync(accessToken, {
+        secret: process.env.JWT_SECRET,
+      });
+  
+      return this.usersService.findById(payload.sub);
+    } catch (e) {
+      throw new UnauthorizedException('Token de sessão inválido');
+    }
+  }
 }
