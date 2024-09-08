@@ -11,7 +11,6 @@ import {
 } from '@nestjs/common';
 import { AuthService } from '../../services/auth/auth.service';
 import { Response, Request } from 'express';
-import { decode } from 'jsonwebtoken';
 
 @Controller('auth')
 export class AuthController {
@@ -56,9 +55,7 @@ export class AuthController {
         message: 'Token de sessão não encontrado!',
       });
     }
-
-    const payload = decode(token);
-      const user = await this.authService.getProfile(payload.sub.toString());
+      const user = await this.authService.getProfile(token);
       return user;
     } catch (e) {
       throw new UnauthorizedException('Token de sessão inválido');

@@ -53,7 +53,7 @@ export class TaskService {
     const { skip, take, cursor, where, orderBy, token } = params;
     const payload = await this.verifyToken(token);
 
-    const userWhere = { ...where, user_id: payload.sub.user_id };
+    const userWhere = { ...where, user_id: payload.sub };
 
     return this.prisma.task.findMany({
       skip,

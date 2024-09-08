@@ -32,7 +32,7 @@ export class AuthService {
       });
     }
 
-   const access_token = this.jwtService.sign({ sub: user.user_id });
+   const access_token = await this.jwtService.signAsync({ sub: user.user_id }, {secret: process.env.JWT_SECRET});
    return { access_token };
   }
 
@@ -60,12 +60,14 @@ export class AuthService {
       },
     });
 
-    const access_token = this.jwtService.sign({ sub: user.user_id });
+    const access_token = this.jwtService.signAsync({ sub: user.user_id }, {secret: process.env.JWT_SECRET});
     return { access_token };
   }
 
-  async getProfile(user_id: string) {
+  async getProfile(token: string) {
     try {
+      const payload = await this.extractInfoFromToken(token);
+      const user_id = payload.sub;
       const result = await this.usersService.findById(user_id);
       return result;
     } catch (e) {
@@ -75,7 +77,7 @@ export class AuthService {
     }
   }
 
-  async verifyToken(token: string) {
+  async extractInfoFromToken(token: string) {
     try {
       const payload = await this.jwtService.verifyAsync(token, {
         secret: process.env.JWT_SECRET,

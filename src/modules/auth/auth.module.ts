@@ -4,17 +4,18 @@ import { UsersModule } from '../users/users.module';
 import { AuthService } from '@/services/auth/auth.service';
 import { UsersService } from '@/services/users/users.service';
 import { AuthController } from '@/controllers/auth/auth.controller';
-import { PrismaService } from '@/services/prisma/prisma.service';
+import { jwtConstants } from '@/constants/jwt-constants';
 
 @Module({
   imports: [
     forwardRef(() => UsersModule),
     JwtModule.register({
-      secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '1h' },
+      global: true,
+      secret: jwtConstants.secret,
+      signOptions: { expiresIn: '30min' },
     }),
   ],
-  providers: [AuthService, UsersService, PrismaService],
+  providers: [AuthService, UsersService, JwtModule],
   controllers: [AuthController],
   exports: [AuthService, UsersService],
 })
