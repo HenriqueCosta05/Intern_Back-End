@@ -60,4 +60,11 @@ export class AuthController {
     } catch (e) {
       throw new UnauthorizedException('Token de sessão inválido');
     }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('logout')
+  async signOut(@Res() res: Response) {
+    res.clearCookie('session_token');
+    return res.send({ message: 'Logout efetuado com sucesso!' });
+  }
   }

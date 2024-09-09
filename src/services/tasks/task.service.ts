@@ -27,13 +27,13 @@ export class TaskService {
     token: string;
   }): Promise<Task | null> {
     const { taskWhereUniqueInput, token } = params;
+
     const payload = await this.verifyToken(token);
 
     const task = await this.prisma.task.findUnique({
       where: taskWhereUniqueInput,
     });
-
-    if (task?.user_id !== payload.sub.user_id) {
+    if (task?.user_id !== payload.sub) {
       throw new UnauthorizedException(
         'Você não tem permissão para acessar essa tarefa',
       );
@@ -89,7 +89,7 @@ export class TaskService {
       where,
     });
 
-    if (task?.user_id !== payload.sub.user_id) {
+    if (task?.user_id !== payload.sub) {
       throw new UnauthorizedException("Você não tem permissão para atualizar essa tarefa");
     }
 
@@ -110,7 +110,7 @@ export class TaskService {
       where,
     });
 
-    if (task?.user_id !== payload.sub.user_id) {
+    if (task?.user_id !== payload.sub) {
       throw new UnauthorizedException();
     }
 
