@@ -10,20 +10,29 @@ export class TaskService {
     private jwtService: JwtService,
   ) {}
 
+  private async verifyToken(token: string) {
+    try {
+      const payload = await this.jwtService.verifyAsync(token, {
+        secret: process.env.JWT_SECRET,
+      });
+      return payload
+
+    } catch (e) {
+      throw new UnauthorizedException('Token de sessão inválido');
+    }
+  }
+
   async findOne(params: {
     taskWhereUniqueInput: Prisma.TaskWhereUniqueInput;
     token: string;
   }): Promise<Task | null> {
     const { taskWhereUniqueInput, token } = params;
 
-    const payload = await this.jwtService.verifyAsync(token, {
-      secret: process.env.JWT_SECRET,
-    });
+    const payload = await this.verifyToken(token);
 
     const task = await this.prisma.task.findUnique({
       where: taskWhereUniqueInput,
     });
-
     if (task?.user_id !== payload.sub) {
       throw new UnauthorizedException(
         'Você não tem permissão para acessar essa tarefa',
@@ -42,10 +51,7 @@ export class TaskService {
     token: string;
   }): Promise<Task[]> {
     const { skip, take, cursor, where, orderBy, token } = params;
-
-    const payload = await this.jwtService.verifyAsync(token, {
-      secret: process.env.JWT_SECRET,
-    });
+    const payload = await this.verifyToken(token);
 
     const userWhere = { ...where, user_id: payload.sub };
 
@@ -63,11 +69,7 @@ export class TaskService {
     token: string;
   }): Promise<Task> {
     const { data, token } = params;
-
-    const payload = await this.jwtService.verifyAsync(token, {
-      secret: process.env.JWT_SECRET,
-    });
-
+    const payload = await this.verifyToken(token);
     const taskData = { ...data, user: { connect: { user_id: payload.sub } } };
 
     return this.prisma.task.create({
@@ -81,17 +83,14 @@ export class TaskService {
     token: string;
   }): Promise<Task> {
     const { where, data, token } = params;
-
-    const payload = await this.jwtService.verifyAsync(token, {
-      secret: process.env.JWT_SECRET,
-    });
+    const payload = await this.verifyToken(token);
 
     const task = await this.prisma.task.findUnique({
       where,
     });
 
     if (task?.user_id !== payload.sub) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException("Você não tem permissão para atualizar essa tarefa");
     }
 
     return this.prisma.task.update({
@@ -105,10 +104,7 @@ export class TaskService {
     token: string;
   }): Promise<Task> {
     const { where, token } = params;
-
-    const payload = await this.jwtService.verifyAsync(token, {
-      secret: process.env.JWT_SECRET,
-    });
+    const payload = await this.verifyToken(token);
 
     const task = await this.prisma.task.findUnique({
       where,

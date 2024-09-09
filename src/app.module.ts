@@ -12,7 +12,6 @@ import { TaskController } from './controllers/tasks/task.controller';
 import { TaskService } from './services/tasks/task.service';
 import { TaskModule } from './modules/tasks/task.module';
 import { JwtMiddleware } from './middlewares/jwt/jwt.middleware';
-import { JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [AuthModule, UsersModule, TaskModule],
@@ -23,7 +22,6 @@ import { JwtService } from '@nestjs/jwt';
     UsersService,
     PrismaService,
     TaskService,
-    JwtService,
   ],
 })
 export class AppModule implements NestModule {
